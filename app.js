@@ -1590,7 +1590,7 @@
 
     const modal = $("#student-profile-modal");
     if (modal) {
-      modal.classList.add("is-open");
+      modal.classList.add("open", "active", "is-open");
       modal.setAttribute("aria-hidden", "false");
       nameInput?.focus();
     }
@@ -1599,7 +1599,7 @@
   function closeStudentProfileModal() {
     const modal = $("#student-profile-modal");
     if (modal) {
-      modal.classList.remove("is-open");
+      modal.classList.remove("open", "active", "is-open");
       modal.setAttribute("aria-hidden", "true");
     }
   }
@@ -3972,8 +3972,20 @@
       else targetList = state.examDraft.data.shortAnswer;
     }
 
-    if (!targetList) return null;
-    return targetList.find((q) => String(q.id) === String(questionId)) || null;
+    if (!targetList || !Array.isArray(targetList)) return null;
+
+    // Ưu tiên 1: Khớp chính xác theo ID (nếu câu hỏi có id)
+    const byId = targetList.find((q) => q && q.id !== undefined && q.id !== null && String(q.id) === String(questionId));
+    if (byId) return byId;
+
+    // Ưu tiên 2: Khớp theo index nếu questionId là số thứ tự
+    const num = Number(questionId);
+    if (!Number.isNaN(num)) {
+      if (targetList[num]) return targetList[num];
+      if (targetList[num - 1]) return targetList[num - 1];
+    }
+
+    return null;
   }
 
   function openQuestionImageModal(type, questionId, source = "draft") {
@@ -4006,9 +4018,8 @@
       existingUrl = state.builderImage?.imageUrl || "";
       existingCaption = state.builderImage?.caption || "";
     } else if (question) {
-      const partNumber = type === "mcq" ? 1 : type === "tf" ? 2 : 3;
       const qText = type === "tf" ? (question.context || "Câu Đúng/Sai") : (question.stem || "");
-      if (badge) badge.textContent = `PHẦN ${partNumber} · ${typeLabel(type).toUpperCase()}`;
+      if (badge) badge.textContent = typeLabel(type).toUpperCase();
       if (title) title.textContent = `Chèn ảnh cho ${question.id ? `câu [${question.id}]` : "câu hỏi"}`;
       if (summaryEl) summaryEl.innerHTML = `<strong>Nội dung:</strong> ${escapeHtml(truncate(qText, 140))}`;
       existingUrl = question.imageUrl || (Array.isArray(question.imageUrls) ? question.imageUrls[0] : "") || "";
@@ -4029,7 +4040,7 @@
 
     const modal = $("#question-image-modal");
     if (modal) {
-      modal.classList.add("is-open");
+      modal.classList.add("open", "active", "is-open");
       modal.setAttribute("aria-hidden", "false");
     }
   }
@@ -4037,7 +4048,7 @@
   function closeQuestionImageModal() {
     const modal = $("#question-image-modal");
     if (modal) {
-      modal.classList.remove("is-open");
+      modal.classList.remove("open", "active", "is-open");
       modal.setAttribute("aria-hidden", "true");
     }
     state.imageModalContext = null;
@@ -4080,7 +4091,10 @@
     const previewImg = $("#qim-preview-img");
     const captionInput = $("#qim-caption-input");
     const messageEl = $("#qim-message");
-    const imageUrl = previewImg?.getAttribute("src")?.trim() || "";
+    let imageUrl = previewImg?.src?.trim() || previewImg?.getAttribute("src")?.trim() || "";
+    if (!imageUrl || imageUrl === window.location.href) {
+      imageUrl = $("#qim-url-input")?.value.trim() || "";
+    }
     const caption = captionInput?.value.trim() || "";
 
     if (!imageUrl) {
@@ -4142,8 +4156,12 @@
 
     delete question.imageUrl;
     delete question.imageUrls;
+    delete question.image_url;
+    delete question.figureUrl;
+    delete question.mediaUrl;
     delete question.imageCaption;
     delete question.visualImageMeta;
+    delete question.imageRequired;
 
     if (source === "preview") {
       if (state.extractedExamData) renderPreviewPanel(state.extractedExamData);
@@ -4158,7 +4176,7 @@
 
   function handleClipboardPaste(event) {
     const modal = $("#question-image-modal");
-    if (!modal || !modal.classList.contains("is-open")) return;
+    if (!modal || (!modal.classList.contains("open") && !modal.classList.contains("active") && !modal.classList.contains("is-open"))) return;
 
     const items = event.clipboardData?.items;
     if (!items) return;
@@ -4185,6 +4203,7 @@
     const deleteBtn = $("#qim-delete-btn");
 
     dropzone?.addEventListener("click", () => fileInput?.click());
+    fileInput?.addEventListener("click", (e) => e.stopPropagation());
     fileInput?.addEventListener("change", (e) => {
       const file = e.target.files?.[0];
       if (file) handleProcessAndPreviewImage(file);
