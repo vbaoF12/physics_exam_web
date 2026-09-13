@@ -670,6 +670,84 @@
     </div>
   </div>
 
+  <!-- Modal Chèn Ảnh Thủ Công Cho Câu Hỏi -->
+  <div id="question-image-modal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-question-image></div>
+
+    <div class="modal-card question-image-card" role="dialog" aria-modal="true" aria-labelledby="question-image-title"
+      aria-describedby="question-image-desc">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow dark" id="question-image-badge">CHÈN ẢNH MINH HỌA</span>
+          <h2 id="question-image-title">Chèn ảnh cho câu hỏi</h2>
+          <p id="question-image-desc" class="modal-subtitle">Tải file từ máy tính, dán ảnh từ clipboard (Ctrl+V), hoặc
+            nhập URL.</p>
+        </div>
+        <button id="close-question-image" class="modal-close-icon" type="button" aria-label="Đóng"
+          data-close-question-image>
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="question-image-content">
+        <!-- Khung tóm tắt câu hỏi -->
+        <div id="qim-question-summary" class="qim-question-summary"></div>
+
+        <!-- Khung kéo thả / chọn file / paste clipboard -->
+        <div id="qim-dropzone" class="image-dropzone" tabindex="0" role="button"
+          aria-label="Kéo thả ảnh hoặc dán ảnh vào đây">
+          <input id="qim-file-input" type="file" accept="image/*" class="visually-hidden" />
+          <div class="dropzone-icon">
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="3" y="3" width="18" height="18" rx="3" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <path d="m21 15-5-5L5 21" />
+            </svg>
+          </div>
+          <p class="dropzone-text"><strong>Chọn ảnh từ máy tính</strong> hoặc kéo thả vào đây</p>
+          <span class="dropzone-hint">💡 Hoặc bấm <code>Win + Shift + S</code> chụp ảnh rồi nhấn <code>Ctrl + V</code>
+            để dán</span>
+        </div>
+
+        <!-- Hoặc nhập link ảnh -->
+        <div class="qim-divider"><span>HOẶC NHẬP LINK ẢNH</span></div>
+        <div class="qim-url-row">
+          <input id="qim-url-input" type="url" placeholder="https://... dán đường dẫn ảnh trực tiếp" />
+          <button id="qim-url-load-btn" class="secondary-button compact" type="button">Tải</button>
+        </div>
+
+        <!-- Khu vực xem trước ảnh khi đã có ảnh được chọn -->
+        <div id="qim-preview-container" class="qim-preview-container" hidden>
+          <div class="qim-preview-header">
+            <span>Ảnh xem trước:</span>
+            <button id="qim-remove-preview-btn" class="text-button danger-text" type="button">Gỡ ảnh này</button>
+          </div>
+          <div class="qim-preview-img-wrap">
+            <img id="qim-preview-img" src="" alt="Xem trước ảnh minh họa" />
+          </div>
+        </div>
+
+        <!-- Chú thích ảnh (tùy chọn) -->
+        <label class="qim-caption-label">
+          <span>Chú thích ảnh (tùy chọn)</span>
+          <input id="qim-caption-input" type="text" placeholder="Ví dụ: Hình 1: Đồ thị dao động điều hòa"
+            maxlength="120" />
+        </label>
+
+        <p id="qim-message" class="student-auth-message" role="status" aria-live="polite"></p>
+      </div>
+
+      <div class="modal-actions">
+        <button id="qim-delete-btn" type="button" class="danger-button compact" style="margin-right: auto;" hidden>Xóa
+          ảnh khỏi câu</button>
+        <button type="button" class="secondary-button" data-close-question-image>Hủy</button>
+        <button id="qim-save-btn" type="button" class="primary-button compact">Lưu ảnh vào câu hỏi</button>
+      </div>
+    </div>
+  </div>
+
   <div id="teacher-login-modal" class="modal" aria-hidden="true">
     <div class="modal-backdrop" data-close-teacher-login></div>
 

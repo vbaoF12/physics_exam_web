@@ -33,7 +33,9 @@
     questionJumpTimer: null,
     observerLockUntil: 0,
     autosaveTimer: null,
-    gradeFilter: "all"
+    gradeFilter: "all",
+    imageModalContext: null,
+    builderImage: null
   };
 
   const $ = (selector) => document.querySelector(selector);
@@ -74,6 +76,7 @@
     bindTeacherControls();
     bindExamManagerControls();
     bindCreateExamModalControls();
+    bindQuestionImageModalControls();
     renderDashboard([]);
     renderQuestionBuilderFields();
     bindAutoGrowTextareas();
@@ -652,11 +655,30 @@
             ${isCorrect ? "<span class=\"correct-badge\">✅</span>" : ""}
           </div>`;
         }).join("");
+
+        const imgUrl = q.imageUrl || (Array.isArray(q.imageUrls) ? q.imageUrls[0] : "") || "";
+        const imgHtml = imgUrl
+          ? `<div class="draft-question-media-bar">
+               <div class="draft-media-preview-mini">
+                 <img src="${escapeHtml(imgUrl)}" class="draft-media-thumb" alt="Ảnh câu hỏi" />
+                 <div class="draft-media-info"><strong>Ảnh minh họa</strong><span>${escapeHtml(q.imageCaption || "Đã có ảnh")}</span></div>
+               </div>
+               <div class="draft-media-actions">
+                 <button type="button" class="btn-change-image" data-preview-attach-type="mcq" data-preview-attach-id="${escapeHtml(String(q.id))}">Đổi ảnh</button>
+                 <button type="button" class="btn-remove-image" data-preview-remove-type="mcq" data-preview-remove-id="${escapeHtml(String(q.id))}">Xóa ảnh</button>
+               </div>
+             </div>`
+          : `<div class="draft-question-media-bar">
+               <span class="field-hint" style="margin:0;">Chưa có ảnh</span>
+               <button type="button" class="btn-attach-image" data-preview-attach-type="mcq" data-preview-attach-id="${escapeHtml(String(q.id))}">📷 Chèn ảnh</button>
+             </div>`;
+
         return `<div class="preview-q-card">
           <div class="preview-q-header">
             <span class="preview-q-num">${q.id?.replace("mcq-", "") || "?"}</span>
             <span class="preview-q-stem">${formatPreviewMath(q.stem)}</span>
           </div>
+          ${imgHtml}
           <div class="preview-options">${optionsHtml}</div>
         </div>`;
       }).join("");
@@ -688,12 +710,31 @@
             ${badgeHtml}
           </div>`;
         }).join("");
+
+        const imgUrl = q.imageUrl || (Array.isArray(q.imageUrls) ? q.imageUrls[0] : "") || "";
+        const imgHtml = imgUrl
+          ? `<div class="draft-question-media-bar">
+               <div class="draft-media-preview-mini">
+                 <img src="${escapeHtml(imgUrl)}" class="draft-media-thumb" alt="Ảnh câu hỏi" />
+                 <div class="draft-media-info"><strong>Ảnh minh họa</strong><span>${escapeHtml(q.imageCaption || "Đã có ảnh")}</span></div>
+               </div>
+               <div class="draft-media-actions">
+                 <button type="button" class="btn-change-image" data-preview-attach-type="tf" data-preview-attach-id="${escapeHtml(String(q.id))}">Đổi ảnh</button>
+                 <button type="button" class="btn-remove-image" data-preview-remove-type="tf" data-preview-remove-id="${escapeHtml(String(q.id))}">Xóa ảnh</button>
+               </div>
+             </div>`
+          : `<div class="draft-question-media-bar">
+               <span class="field-hint" style="margin:0;">Chưa có ảnh</span>
+               <button type="button" class="btn-attach-image" data-preview-attach-type="tf" data-preview-attach-id="${escapeHtml(String(q.id))}">📷 Chèn ảnh</button>
+             </div>`;
+
         return `<div class="preview-q-card">
           <div class="preview-q-header">
             <span class="preview-q-num tf-num">${q.id?.replace("tf-", "") || "?"}</span>
             <span class="preview-q-stem">${q.context ? "(Xem dữ kiện bên dưới)" : "Câu đúng/sai"}</span>
           </div>
           ${contextHtml}
+          ${imgHtml}
           <div class="preview-tf-statements">${stmtsHtml}</div>
         </div>`;
       }).join("");
@@ -712,11 +753,30 @@
         const answerHtml = q.answer
           ? `<span class="short-answer-value">${formatPreviewMath(q.answer)}</span>`
           : `<span class="short-answer-empty">Chưa có đáp án</span>`;
+
+        const imgUrl = q.imageUrl || (Array.isArray(q.imageUrls) ? q.imageUrls[0] : "") || "";
+        const imgHtml = imgUrl
+          ? `<div class="draft-question-media-bar">
+               <div class="draft-media-preview-mini">
+                 <img src="${escapeHtml(imgUrl)}" class="draft-media-thumb" alt="Ảnh câu hỏi" />
+                 <div class="draft-media-info"><strong>Ảnh minh họa</strong><span>${escapeHtml(q.imageCaption || "Đã có ảnh")}</span></div>
+               </div>
+               <div class="draft-media-actions">
+                 <button type="button" class="btn-change-image" data-preview-attach-type="short" data-preview-attach-id="${escapeHtml(String(q.id))}">Đổi ảnh</button>
+                 <button type="button" class="btn-remove-image" data-preview-remove-type="short" data-preview-remove-id="${escapeHtml(String(q.id))}">Xóa ảnh</button>
+               </div>
+             </div>`
+          : `<div class="draft-question-media-bar">
+               <span class="field-hint" style="margin:0;">Chưa có ảnh</span>
+               <button type="button" class="btn-attach-image" data-preview-attach-type="short" data-preview-attach-id="${escapeHtml(String(q.id))}">📷 Chèn ảnh</button>
+             </div>`;
+
         return `<div class="preview-q-card">
           <div class="preview-q-header">
             <span class="preview-q-num short-num">${q.id?.replace("short-", "") || "?"}</span>
             <span class="preview-q-stem">${formatPreviewMath(q.stem)}</span>
           </div>
+          ${imgHtml}
           <div class="preview-short-answer">
             <span class="short-answer-label">Đáp án:</span>
             ${answerHtml}
@@ -726,6 +786,18 @@
     } else if (shortSection) {
       shortSection.hidden = true;
     }
+
+    // Gắn sự kiện chèn / xóa ảnh trong preview panel
+    $$('[data-preview-attach-type]').forEach((btn) => {
+      btn.addEventListener("click", () => {
+        openQuestionImageModal(btn.dataset.previewAttachType, btn.dataset.previewAttachId, "preview");
+      });
+    });
+    $$('[data-preview-remove-type]').forEach((btn) => {
+      btn.addEventListener("click", () => {
+        handleRemoveQuestionImage(btn.dataset.previewRemoveType, btn.dataset.previewRemoveId, "preview");
+      });
+    });
 
     // Hiện panel và render KaTeX
     const panel = $("#pdf-preview-panel");
@@ -3216,6 +3288,10 @@
     const reviewListEl = $("#review-list");
     reviewListEl.innerHTML = state.items.map((item, globalIndex) => {
       const review = getItemReview(item, result.answers);
+      const imgUrl = item.question.imageUrl || (Array.isArray(item.question.imageUrls) ? item.question.imageUrls[0] : "") || "";
+      const mediaHtml = imgUrl
+        ? `<figure class="review-media"><img src="${escapeHtml(imgUrl)}" alt="Hình minh họa câu hỏi" loading="lazy" />${item.question.imageCaption ? `<figcaption>${escapeHtml(item.question.imageCaption)}</figcaption>` : ""}</figure>`
+        : "";
       return `
         <article class="review-item">
           <button class="review-summary" type="button" data-review-index="${globalIndex}">
@@ -3223,7 +3299,7 @@
             <strong>${typeLabel(item.type)} · Câu ${item.number}: ${truncate(item.type === "tf" ? item.question.context : item.question.stem, 120)}</strong>
             <small>${review.label}</small>
           </button>
-          <div class="review-detail">${review.detail}<div class="review-answer"><strong>Lời giải:</strong> ${review.explanation}</div></div>
+          <div class="review-detail">${mediaHtml}${review.detail}<div class="review-answer"><strong>Lời giải:</strong> ${review.explanation}</div></div>
         </article>`;
     }).join("");
     $$('[data-review-index]').forEach((button) => button.addEventListener("click", () => button.closest(".review-item").classList.toggle("open")));
@@ -3541,11 +3617,45 @@
     ].join("");
   }
 
+  function renderBuilderImageRow() {
+    if (state.builderImage?.imageUrl) {
+      return `
+        <div class="builder-image-row">
+          <div class="builder-image-header">
+            <span>Ảnh minh họa đính kèm:</span>
+            <div style="display:flex;gap:6px;">
+              <button type="button" class="btn-change-image" id="qb-change-image-btn">Đổi ảnh</button>
+              <button type="button" class="btn-remove-image" id="qb-remove-image-btn">Gỡ ảnh</button>
+            </div>
+          </div>
+          <div class="builder-image-preview">
+            <img src="${escapeHtml(state.builderImage.imageUrl)}" alt="Ảnh câu hỏi mới" />
+            <small>${escapeHtml(state.builderImage.caption || "Không có chú thích")}</small>
+          </div>
+        </div>`;
+    }
+    return `
+      <div class="builder-image-row">
+        <div class="builder-image-header">
+          <span>Ảnh minh họa (tùy chọn)</span>
+          <button type="button" class="btn-attach-image" id="qb-attach-image-btn">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="3" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <path d="m21 15-5-5L5 21" />
+            </svg>
+            Chèn ảnh
+          </button>
+        </div>
+      </div>`;
+  }
+
   function renderQuestionBuilderFields() {
     const container = $("#question-builder-fields");
     if (!container) return;
     const type = $("#question-type-input")?.value || "mcq";
     const passageField = `<label class="builder-wide">Đoạn dữ kiện dùng chung<select id="qb-passage-id">${getPassageOptions()}</select><small class="field-hint">Chọn một đoạn đã lưu ở phía trên. Nội dung dài không phải lặp lại trong từng câu.</small></label>`;
+    const imageRow = renderBuilderImageRow();
 
     if (type === "mcq") {
       container.innerHTML = `
@@ -3554,10 +3664,12 @@
           ${passageField}
           <label class="builder-wide">Dữ kiện riêng của câu (tùy chọn)<textarea id="qb-context" class="long-content-textarea" rows="6" data-auto-grow placeholder="Không giới hạn ký tự"></textarea></label>
           <label class="builder-wide">Nội dung câu hỏi<textarea id="qb-stem" class="long-content-textarea" rows="6" data-auto-grow placeholder="Không giới hạn ký tự"></textarea><small class="field-hint">Không đặt maxlength. Có thể dán nguyên văn đoạn dài, công thức và xuống dòng.</small></label>
+          ${imageRow}
           ${["A", "B", "C", "D"].map((letter, index) => `<label>Phương án ${letter}<textarea id="qb-option-${index}" rows="3" data-auto-grow placeholder="Phương án có thể dài"></textarea></label>`).join("")}
           <label>Đáp án đúng<select id="qb-mcq-answer"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label>
           <label class="builder-wide">Lời giải<textarea id="qb-explanation" class="long-content-textarea" rows="6" data-auto-grow placeholder="Không giới hạn ký tự"></textarea></label>
         </div>`;
+      bindBuilderImageButtons(type);
       bindAutoGrowTextareas();
       return;
     }
@@ -3567,6 +3679,7 @@
           <label>Chủ đề<input id="qb-topic" placeholder="Ví dụ: Khí lí tưởng" /></label>
           ${passageField}
           <label class="builder-wide">Dữ kiện riêng của câu<textarea id="qb-context" class="long-content-textarea" rows="10" data-auto-grow placeholder="Không giới hạn ký tự"></textarea><small class="field-hint">Nếu đã chọn đoạn dữ kiện chung, ô này chỉ cần ghi phần bổ sung riêng cho câu.</small></label>
+          ${imageRow}
         </div>
         <div class="tf-builder-list">
           ${[0, 1, 2, 3].map((index) => `
@@ -3577,6 +3690,7 @@
               <textarea id="qb-tf-explanation-${index}" rows="3" data-auto-grow placeholder="Giải thích, không giới hạn ký tự"></textarea>
             </div>`).join("")}
         </div>`;
+      bindBuilderImageButtons(type);
       bindAutoGrowTextareas();
       return;
     }
@@ -3586,12 +3700,23 @@
         ${passageField}
         <label class="builder-wide">Dữ kiện riêng của câu (tùy chọn)<textarea id="qb-context" class="long-content-textarea" rows="6" data-auto-grow placeholder="Không giới hạn ký tự"></textarea></label>
         <label class="builder-wide">Nội dung câu hỏi<textarea id="qb-stem" class="long-content-textarea" rows="6" data-auto-grow placeholder="Không giới hạn ký tự"></textarea></label>
+        ${imageRow}
         <label>Đáp án số<input id="qb-short-answer" inputmode="decimal" placeholder="Ví dụ: 14.4" /></label>
         <label>Sai số cho phép<input id="qb-tolerance" inputmode="decimal" value="0.01" /></label>
         <label>Đơn vị<input id="qb-unit" placeholder="Ví dụ: kJ" /></label>
         <label class="builder-wide">Lời giải<textarea id="qb-explanation" class="long-content-textarea" rows="6" data-auto-grow placeholder="Không giới hạn ký tự"></textarea></label>
       </div>`;
+    bindBuilderImageButtons(type);
     bindAutoGrowTextareas();
+  }
+
+  function bindBuilderImageButtons(type) {
+    $("#qb-attach-image-btn")?.addEventListener("click", () => openQuestionImageModal(type, null, "builder"));
+    $("#qb-change-image-btn")?.addEventListener("click", () => openQuestionImageModal(type, null, "builder"));
+    $("#qb-remove-image-btn")?.addEventListener("click", () => {
+      state.builderImage = null;
+      renderQuestionBuilderFields();
+    });
   }
 
   function addQuestionToDraft() {
@@ -3606,12 +3731,17 @@
     const passageId = $("#qb-passage-id")?.value || "";
     const context = $("#qb-context")?.value.trim() || "";
 
+    const imgData = state.builderImage;
+    const imageUrl = imgData?.imageUrl || "";
+    const imageUrls = imageUrl ? [imageUrl] : [];
+    const imageCaption = imgData?.caption || "";
+
     if (type === "mcq") {
       if (counts.mcq >= 18) return showToast("Phần I đã đủ 18 câu.");
       const stem = $("#qb-stem").value.trim();
       const options = [0, 1, 2, 3].map((index) => $(`#qb-option-${index}`).value.trim());
       if (!stem || options.some((option) => !option)) return showToast("Hãy nhập nội dung và đủ bốn phương án.");
-      state.examDraft.data.mcq.push({ id, topic, passageId, context, stem, options, answer: Number($("#qb-mcq-answer").value), explanation: $("#qb-explanation").value.trim() });
+      state.examDraft.data.mcq.push({ id, topic, passageId, context, stem, options, answer: Number($("#qb-mcq-answer").value), explanation: $("#qb-explanation").value.trim(), imageUrl, imageUrls, imageCaption });
     } else if (type === "tf") {
       if (counts.tf >= 4) return showToast("Phần II đã đủ 4 câu.");
       const statements = [0, 1, 2, 3].map((index) => ({
@@ -3620,16 +3750,17 @@
         explanation: $(`#qb-tf-explanation-${index}`).value.trim()
       }));
       if ((!context && !passageId) || statements.some((statement) => !statement.text)) return showToast("Hãy chọn đoạn dữ kiện chung hoặc nhập dữ kiện riêng, đồng thời nhập đủ bốn nhận định.");
-      state.examDraft.data.trueFalse.push({ id, topic, passageId, context, statements });
+      state.examDraft.data.trueFalse.push({ id, topic, passageId, context, statements, imageUrl, imageUrls, imageCaption });
     } else {
       if (counts.short >= 6) return showToast("Phần III đã đủ 6 câu.");
       const stem = $("#qb-stem").value.trim();
       const answer = parseNumericAnswer($("#qb-short-answer").value);
       const tolerance = parseNumericAnswer($("#qb-tolerance").value);
       if (!stem || !Number.isFinite(answer) || !Number.isFinite(tolerance) || tolerance < 0) return showToast("Hãy nhập câu hỏi, đáp án số và sai số hợp lệ.");
-      state.examDraft.data.shortAnswer.push({ id, topic, passageId, context, stem, answer, tolerance, unit: $("#qb-unit").value.trim(), explanation: $("#qb-explanation").value.trim() });
+      state.examDraft.data.shortAnswer.push({ id, topic, passageId, context, stem, answer, tolerance, unit: $("#qb-unit").value.trim(), explanation: $("#qb-explanation").value.trim(), imageUrl, imageUrls, imageCaption });
     }
 
+    state.builderImage = null;
     updateDraftCounts();
     renderDraftQuestionList();
     renderQuestionBuilderFields();
@@ -3716,19 +3847,62 @@
     container.innerHTML = items.map((item) => {
       const fullText = item.type === "tf" ? item.question.context : item.question.stem;
       const passage = (state.examDraft.data.passages || []).find((entry) => String(entry.id) === String(item.question.passageId || ""));
+      const imgUrl = item.question.imageUrl || (Array.isArray(item.question.imageUrls) ? item.question.imageUrls[0] : "") || "";
+      const mediaBar = imgUrl
+        ? `
+          <div class="draft-question-media-bar">
+            <div class="draft-media-preview-mini">
+              <img src="${escapeHtml(imgUrl)}" class="draft-media-thumb" alt="Ảnh câu hỏi" />
+              <div class="draft-media-info">
+                <strong>Ảnh minh họa</strong>
+                <span>${escapeHtml(item.question.imageCaption || "Đã có ảnh minh họa")}</span>
+              </div>
+            </div>
+            <div class="draft-media-actions">
+              <button type="button" class="btn-change-image" data-attach-image-type="${item.type}" data-attach-image-id="${escapeHtml(String(item.question.id))}">Đổi ảnh</button>
+              <button type="button" class="btn-remove-image" data-remove-image-type="${item.type}" data-remove-image-id="${escapeHtml(String(item.question.id))}">Xóa ảnh</button>
+            </div>
+          </div>`
+        : `
+          <div class="draft-question-media-bar">
+            <span class="field-hint" style="margin:0;">Chưa có ảnh minh họa.</span>
+            <button type="button" class="btn-attach-image" data-attach-image-type="${item.type}" data-attach-image-id="${escapeHtml(String(item.question.id))}">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="m21 15-5-5L5 21" />
+              </svg>
+              Chèn ảnh
+            </button>
+          </div>`;
+
       return `
         <article class="draft-question-item long-question-item">
-          <details>
+          <details open>
             <summary><span>${typeLabel(item.type)} · Câu ${item.number}</span><strong>${escapeHtml(truncate(fullText, 180))}</strong></summary>
             ${passage ? `<p class="draft-linked-passage">Dùng đoạn dữ kiện: <strong>${escapeHtml(passage.title || passage.id)}</strong></p>` : ""}
             <div class="draft-question-full">${renderLongText(fullText)}</div>
+            ${mediaBar}
           </details>
           <button class="danger-button compact-question-delete" type="button" data-delete-question-type="${item.type}" data-delete-question-id="${item.question.id}">Xóa</button>
         </article>`;
     }).join("");
+
     $$('[data-delete-question-id]').forEach((button) => button.addEventListener("click", () => {
       deleteDraftQuestion(button.dataset.deleteQuestionType, button.dataset.deleteQuestionId);
     }));
+
+    $$('[data-attach-image-type]').forEach((button) => {
+      button.addEventListener("click", () => {
+        openQuestionImageModal(button.dataset.attachImageType, button.dataset.attachImageId, "draft");
+      });
+    });
+
+    $$('[data-remove-image-type]').forEach((button) => {
+      button.addEventListener("click", () => {
+        handleRemoveQuestionImage(button.dataset.removeImageType, button.dataset.removeImageId, "draft");
+      });
+    });
   }
 
   function deleteDraftQuestion(type, questionId) {
@@ -3737,6 +3911,341 @@
     state.examDraft.data[key] = state.examDraft.data[key].filter((question) => String(question.id) !== String(questionId));
     updateDraftCounts();
     renderDraftQuestionList();
+  }
+
+  /* ============================================================
+     QUẢN LÝ CHÈN ẢNH THỦ CÔNG CHO CÂU HỎI
+     ============================================================ */
+
+  async function uploadImageFileToStorage(file) {
+    const examCode = state.examDraft?.code || "EXAM";
+    const safeCode = examCode.toLowerCase().replace(/[^a-z0-9_-]/g, "_");
+    const ext = (file.name?.split(".").pop() || "png").toLowerCase();
+    const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).slice(2, 8);
+    const path = `manual-uploads/${safeCode}/${timestamp}_${randomSuffix}.${ext}`;
+
+    if (window.supabaseClient) {
+      try {
+        const { error } = await window.supabaseClient.storage
+          .from("exam-images")
+          .upload(path, file, {
+            contentType: file.type || "image/png",
+            upsert: true
+          });
+        if (!error) {
+          const { data } = window.supabaseClient.storage
+            .from("exam-images")
+            .getPublicUrl(path);
+          if (data?.publicUrl) {
+            return { imageUrl: data.publicUrl, storagePath: path };
+          }
+        } else {
+          console.warn("Lỗi upload Supabase storage, dùng base64 fallback:", error);
+        }
+      } catch (err) {
+        console.warn("Không kết nối được Supabase storage, dùng base64 fallback:", err);
+      }
+    }
+
+    // Fallback sang base64 data URL đảm bảo luôn thành công
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve({ imageUrl: reader.result, storagePath: "" });
+      reader.onerror = () => reject(new Error("Không thể đọc file ảnh."));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function findQuestionInContext(context) {
+    if (!context) return null;
+    const { type, questionId, source } = context;
+    let targetList = null;
+
+    if (source === "preview" && state.extractedExamData) {
+      if (type === "mcq") targetList = state.extractedExamData.mcq;
+      else if (type === "tf") targetList = state.extractedExamData.trueFalse;
+      else targetList = state.extractedExamData.shortAnswer;
+    } else if (state.examDraft?.data) {
+      if (type === "mcq") targetList = state.examDraft.data.mcq;
+      else if (type === "tf") targetList = state.examDraft.data.trueFalse;
+      else targetList = state.examDraft.data.shortAnswer;
+    }
+
+    if (!targetList) return null;
+    return targetList.find((q) => String(q.id) === String(questionId)) || null;
+  }
+
+  function openQuestionImageModal(type, questionId, source = "draft") {
+    state.imageModalContext = { type, questionId, source };
+    const question = source === "builder" ? null : findQuestionInContext(state.imageModalContext);
+
+    const badge = $("#question-image-badge");
+    const title = $("#question-image-title");
+    const summaryEl = $("#qim-question-summary");
+    const previewContainer = $("#qim-preview-container");
+    const previewImg = $("#qim-preview-img");
+    const captionInput = $("#qim-caption-input");
+    const urlInput = $("#qim-url-input");
+    const deleteBtn = $("#qim-delete-btn");
+    const messageEl = $("#qim-message");
+
+    if (messageEl) {
+      messageEl.textContent = "";
+      messageEl.className = "student-auth-message";
+    }
+    if (urlInput) urlInput.value = "";
+
+    let existingUrl = "";
+    let existingCaption = "";
+
+    if (source === "builder") {
+      if (badge) badge.textContent = "CÂU HỎI MỚI";
+      if (title) title.textContent = "Chèn ảnh cho câu hỏi mới";
+      if (summaryEl) summaryEl.innerHTML = `<strong>Loại câu:</strong> ${typeLabel(type)}. Ảnh sẽ được đính kèm vào câu hỏi sau khi nhấn "Thêm câu hỏi".`;
+      existingUrl = state.builderImage?.imageUrl || "";
+      existingCaption = state.builderImage?.caption || "";
+    } else if (question) {
+      const partNumber = type === "mcq" ? 1 : type === "tf" ? 2 : 3;
+      const qText = type === "tf" ? (question.context || "Câu Đúng/Sai") : (question.stem || "");
+      if (badge) badge.textContent = `PHẦN ${partNumber} · ${typeLabel(type).toUpperCase()}`;
+      if (title) title.textContent = `Chèn ảnh cho ${question.id ? `câu [${question.id}]` : "câu hỏi"}`;
+      if (summaryEl) summaryEl.innerHTML = `<strong>Nội dung:</strong> ${escapeHtml(truncate(qText, 140))}`;
+      existingUrl = question.imageUrl || (Array.isArray(question.imageUrls) ? question.imageUrls[0] : "") || "";
+      existingCaption = question.imageCaption || "";
+    }
+
+    if (existingUrl) {
+      if (previewImg) previewImg.src = existingUrl;
+      if (previewContainer) previewContainer.hidden = false;
+      if (captionInput) captionInput.value = existingCaption;
+      if (deleteBtn) deleteBtn.hidden = false;
+    } else {
+      if (previewImg) previewImg.src = "";
+      if (previewContainer) previewContainer.hidden = true;
+      if (captionInput) captionInput.value = "";
+      if (deleteBtn) deleteBtn.hidden = true;
+    }
+
+    const modal = $("#question-image-modal");
+    if (modal) {
+      modal.classList.add("is-open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+  }
+
+  function closeQuestionImageModal() {
+    const modal = $("#question-image-modal");
+    if (modal) {
+      modal.classList.remove("is-open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+    state.imageModalContext = null;
+  }
+
+  async function handleProcessAndPreviewImage(file) {
+    const messageEl = $("#qim-message");
+    const previewContainer = $("#qim-preview-container");
+    const previewImg = $("#qim-preview-img");
+    const saveBtn = $("#qim-save-btn");
+
+    if (messageEl) {
+      messageEl.className = "student-auth-message";
+      messageEl.textContent = "Đang nạp ảnh...";
+    }
+    setButtonLoading(saveBtn, true, "Đang xử lý...", "Lưu ảnh vào câu hỏi");
+
+    try {
+      const result = await uploadImageFileToStorage(file);
+      if (previewImg) previewImg.src = result.imageUrl;
+      if (previewContainer) previewContainer.hidden = false;
+      const deleteBtn = $("#qim-delete-btn");
+      if (deleteBtn) deleteBtn.hidden = false;
+      if (messageEl) {
+        messageEl.className = "student-auth-message success";
+        messageEl.textContent = "Đã nhận ảnh thành công! Bạn có thể thêm chú thích rồi nhấn “Lưu ảnh vào câu hỏi”.";
+      }
+    } catch (err) {
+      console.error("Lỗi đọc ảnh:", err);
+      if (messageEl) {
+        messageEl.className = "student-auth-message error";
+        messageEl.textContent = err.message || "Không thể nạp ảnh. Vui lòng thử lại.";
+      }
+    } finally {
+      setButtonLoading(saveBtn, false, "Đang xử lý...", "Lưu ảnh vào câu hỏi");
+    }
+  }
+
+  function handleSaveQuestionImage() {
+    const previewImg = $("#qim-preview-img");
+    const captionInput = $("#qim-caption-input");
+    const messageEl = $("#qim-message");
+    const imageUrl = previewImg?.getAttribute("src")?.trim() || "";
+    const caption = captionInput?.value.trim() || "";
+
+    if (!imageUrl) {
+      if (messageEl) {
+        messageEl.className = "student-auth-message error";
+        messageEl.textContent = "Vui lòng chọn hoặc dán ảnh trước khi lưu.";
+      }
+      return;
+    }
+
+    const context = state.imageModalContext;
+    if (!context) return;
+
+    if (context.source === "builder") {
+      state.builderImage = { imageUrl, caption };
+      renderQuestionBuilderFields();
+      showToast("Đã đính kèm ảnh cho câu hỏi mới.");
+      closeQuestionImageModal();
+      return;
+    }
+
+    const question = findQuestionInContext(context);
+    if (!question) {
+      showToast("Không tìm thấy câu hỏi để gán ảnh.");
+      closeQuestionImageModal();
+      return;
+    }
+
+    question.imageUrl = imageUrl;
+    question.imageUrls = [imageUrl];
+    question.imageCaption = caption;
+    delete question.visualImageMeta;
+
+    if (context.source === "preview") {
+      if (state.extractedExamData) renderPreviewPanel(state.extractedExamData);
+      showToast("Đã lưu ảnh cho câu hỏi trích xuất từ PDF.");
+    } else {
+      renderDraftQuestionList();
+      showToast("Đã gắn ảnh vào câu hỏi. Hãy nhớ nhấn “Lưu bản nháp” để lưu lên Supabase.");
+    }
+
+    closeQuestionImageModal();
+  }
+
+  function handleRemoveQuestionImage(type, questionId, source = "draft") {
+    if (source === "builder") {
+      state.builderImage = null;
+      renderQuestionBuilderFields();
+      showToast("Đã gỡ ảnh khỏi câu hỏi mới.");
+      closeQuestionImageModal();
+      return;
+    }
+
+    const context = { type, questionId, source };
+    const question = findQuestionInContext(context);
+    if (!question) return;
+
+    if (!window.confirm("Bạn có chắc chắn muốn xóa ảnh khỏi câu hỏi này?")) return;
+
+    delete question.imageUrl;
+    delete question.imageUrls;
+    delete question.imageCaption;
+    delete question.visualImageMeta;
+
+    if (source === "preview") {
+      if (state.extractedExamData) renderPreviewPanel(state.extractedExamData);
+      showToast("Đã xóa ảnh khỏi câu hỏi trích xuất.");
+    } else {
+      renderDraftQuestionList();
+      showToast("Đã xóa ảnh khỏi câu hỏi. Hãy nhớ nhấn “Lưu bản nháp”.");
+    }
+
+    closeQuestionImageModal();
+  }
+
+  function handleClipboardPaste(event) {
+    const modal = $("#question-image-modal");
+    if (!modal || !modal.classList.contains("is-open")) return;
+
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          event.preventDefault();
+          handleProcessAndPreviewImage(file);
+          return;
+        }
+      }
+    }
+  }
+
+  function bindQuestionImageModalControls() {
+    const dropzone = $("#qim-dropzone");
+    const fileInput = $("#qim-file-input");
+    const urlInput = $("#qim-url-input");
+    const loadUrlBtn = $("#qim-url-load-btn");
+    const removePreviewBtn = $("#qim-remove-preview-btn");
+    const saveBtn = $("#qim-save-btn");
+    const deleteBtn = $("#qim-delete-btn");
+
+    dropzone?.addEventListener("click", () => fileInput?.click());
+    fileInput?.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (file) handleProcessAndPreviewImage(file);
+      e.target.value = "";
+    });
+
+    dropzone?.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropzone.classList.add("dragover");
+    });
+    dropzone?.addEventListener("dragleave", () => {
+      dropzone.classList.remove("dragover");
+    });
+    dropzone?.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("dragover");
+      const file = e.dataTransfer?.files?.[0];
+      if (file && file.type.startsWith("image/")) {
+        handleProcessAndPreviewImage(file);
+      }
+    });
+
+    loadUrlBtn?.addEventListener("click", () => {
+      const url = urlInput?.value.trim();
+      if (!url) return;
+      const previewImg = $("#qim-preview-img");
+      const previewContainer = $("#qim-preview-container");
+      const msg = $("#qim-message");
+      if (previewImg) previewImg.src = url;
+      if (previewContainer) previewContainer.hidden = false;
+      const delBtn = $("#qim-delete-btn");
+      if (delBtn) delBtn.hidden = false;
+      if (msg) {
+        msg.className = "student-auth-message success";
+        msg.textContent = "Đã nạp ảnh từ liên kết!";
+      }
+    });
+
+    removePreviewBtn?.addEventListener("click", () => {
+      const previewImg = $("#qim-preview-img");
+      const previewContainer = $("#qim-preview-container");
+      if (previewImg) previewImg.src = "";
+      if (previewContainer) previewContainer.hidden = true;
+    });
+
+    saveBtn?.addEventListener("click", handleSaveQuestionImage);
+    deleteBtn?.addEventListener("click", () => {
+      if (state.imageModalContext) {
+        handleRemoveQuestionImage(
+          state.imageModalContext.type,
+          state.imageModalContext.questionId,
+          state.imageModalContext.source
+        );
+      }
+    });
+
+    $$('[data-close-question-image]').forEach((btn) => {
+      btn.addEventListener("click", closeQuestionImageModal);
+    });
+
+    window.addEventListener("paste", handleClipboardPaste);
   }
 
   async function saveExamDraft(publish) {
