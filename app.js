@@ -3903,6 +3903,8 @@
         handleRemoveQuestionImage(button.dataset.removeImageType, button.dataset.removeImageId, "draft");
       });
     });
+
+    renderMathContent(container);
   }
 
   function deleteDraftQuestion(type, questionId) {
@@ -4448,13 +4450,92 @@
     return text;
   }
 
+  function extractBraced(str, startIndex) {
+    if (str[startIndex] !== "{") return null;
+    let depth = 0;
+    for (let i = startIndex; i < str.length; i++) {
+      if (str[i] === "{") depth++;
+      else if (str[i] === "}") {
+        depth--;
+        if (depth === 0) return { content: str.slice(startIndex + 1, i), endIndex: i };
+      }
+    }
+    return null;
+  }
+
+  function convertFracToSlash(str) {
+    if (!str || (!str.includes("\\frac") && !str.includes("\\dfrac") && !str.includes("\\cfrac"))) {
+      return str;
+    }
+    let result = "";
+    let i = 0;
+    while (i < str.length) {
+      const fracIdx = str.indexOf("\\frac", i);
+      const dfracIdx = str.indexOf("\\dfrac", i);
+      const cfracIdx = str.indexOf("\\cfrac", i);
+      const candidates = [fracIdx, dfracIdx, cfracIdx].filter((idx) => idx !== -1);
+      if (!candidates.length) {
+        result += str.slice(i);
+        break;
+      }
+      const nextIdx = Math.min(...candidates);
+      const isDfrac = nextIdx === dfracIdx;
+      const isCfrac = nextIdx === cfracIdx;
+      const cmdLen = (isDfrac || isCfrac) ? 6 : 5;
+
+      result += str.slice(i, nextIdx);
+      let cursor = nextIdx + cmdLen;
+      while (cursor < str.length && /\s/.test(str[cursor])) cursor++;
+
+      const num = extractBraced(str, cursor);
+      if (!num) {
+        result += str.slice(nextIdx, cursor);
+        i = cursor;
+        continue;
+      }
+      cursor = num.endIndex + 1;
+      while (cursor < str.length && /\s/.test(str[cursor])) cursor++;
+
+      const den = extractBraced(str, cursor);
+      if (!den) {
+        result += str.slice(nextIdx, cursor);
+        i = cursor;
+        continue;
+      }
+
+      let numText = convertFracToSlash(num.content.trim());
+      let denText = convertFracToSlash(den.content.trim());
+
+      const numNeedsParen = /[+\-]/.test(numText) && !/^\([^\)]+\)$/.test(numText);
+      const denNeedsParen = /[+\-*/]/.test(denText) && !/^\([^\)]+\)$/.test(denText);
+      const nStr = numNeedsParen ? `(${numText})` : numText;
+      const dStr = denNeedsParen ? `(${denText})` : denText;
+
+      result += `${nStr}/${dStr}`;
+      i = den.endIndex + 1;
+      if (i < str.length && /[A-Za-z\\]/.test(str[i])) {
+        result += " ";
+      }
+    }
+    return result;
+  }
+
   function protectMathSegments(text) {
     const segments = [];
     const pattern =
       /\\\([\s\S]*?\\\)|\\\[[\s\S]*?\\\]|\$\$[\s\S]*?\$\$|\$(?!\$)[^$\n]+?\$/g;
     const masked = String(text).replace(pattern, (match) => {
+      let cleanMatch = match;
+      // Chuyển đổi khối display math \[...\] và $$...$$ sang inline math \(...\) để luôn nằm ngang
+      if (cleanMatch.startsWith("\\[") && cleanMatch.endsWith("\\]")) {
+        cleanMatch = "\\(" + cleanMatch.slice(2, -2).trim() + "\\)";
+      } else if (cleanMatch.startsWith("$$") && cleanMatch.endsWith("$$")) {
+        cleanMatch = "\\(" + cleanMatch.slice(2, -2).trim() + "\\)";
+      }
+      // Chuyển đổi phân số dạng dọc \frac{a}{b} sang dạng nằm ngang a/b
+      cleanMatch = convertFracToSlash(cleanMatch);
       const token = `@@PHYSICS_MATH_${segments.length}@@`;
-      segments.push(match);
+      segments.push(cleanMatch);
       return token;
     });
     return { masked, segments };
@@ -4466,6 +4547,15 @@
 
   function wrapLooseLatex(value) {
     let text = normalizeLatexEscapes(value);
+
+    // Chuẩn hóa mọi khối công thức display math sang inline math nằm ngang
+    text = text
+      .replace(/\\\[([\s\S]*?)\\\]/g, "\\($1\\)")
+      .replace(/\$\$([\s\S]*?)\$\$/g, "\\($1\\)");
+
+    // Chuyển phân số \frac{a}{b} sang dạng ngang a/b
+    text = convertFracToSlash(text);
+
     const { masked, segments } = protectMathSegments(text);
     text = masked;
 
@@ -4507,7 +4597,7 @@
     );
 
     text = text.replace(
-      /((?:[A-Za-z]\w*\s*=\s*)?(?:\\frac\{[^{}\n]*\}\{[^{}\n]*\}|\\sqrt\{[^{}\n]*\}|\\vec\{[^{}\n]*\}|\\Delta\b[^;,\n]*))/g,
+      /((?:[A-Za-z]\w*\s*=\s*)?(?:\\sqrt\{[^{}\n]*\}|\\vec\{[^{}\n]*\}|\\Delta\s*[A-Za-z0-9_]+))/g,
       (match) => `\\(${match.trim()}\\)`
     );
 
@@ -4605,8 +4695,8 @@
     try {
       renderFn(rootElement, {
         delimiters: [
-          { left: "\\[", right: "\\]", display: true },
-          { left: "$$", right: "$$", display: true },
+          { left: "\\[", right: "\\]", display: false },
+          { left: "$$", right: "$$", display: false },
           { left: "\\(", right: "\\)", display: false },
           { left: "$", right: "$", display: false }
         ],

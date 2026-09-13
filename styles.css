@@ -4006,31 +4006,71 @@ textarea:focus {
   display: none;
 }
 
-.option-text .katex,
-.option-text .katex * {
+/* Áp dụng định dạng ngang toàn diện cho mọi công thức KaTeX trong toàn web */
+.katex,
+.katex * {
   writing-mode: horizontal-tb !important;
   text-orientation: mixed !important;
+  direction: ltr !important;
+  box-sizing: content-box !important;
 }
 
-.option-text .katex {
-  white-space: nowrap;
-  font-size: 1.02em;
-}
-
-.question-stem .katex,
-.question-context .katex,
-.shared-passage-content .katex,
-.tf-text .katex,
-.physics-data-table .katex {
-  font-size: 1.02em;
-}
-
-.katex-display {
+/* Đảm bảo công thức KaTeX luôn hiển thị nội dòng (inline) nằm ngang, không bị ngắt rớt từng ký tự */
+.katex {
+  display: inline-block !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  text-indent: 0 !important;
+  line-height: normal !important;
+  font-size: 1.05em;
+  vertical-align: -0.08em;
   max-width: 100%;
-  margin: 16px 0;
+}
+
+.katex .katex-html {
+  display: inline-block !important;
+  white-space: nowrap !important;
+}
+
+.katex .base {
+  display: inline-block !important;
+  white-space: nowrap !important;
+  width: auto !important;
+}
+
+.katex .strut {
+  display: inline-block !important;
+}
+
+.katex .mord,
+.katex .mbin,
+.katex .mrel,
+.katex .mopen,
+.katex .mclose,
+.katex .mpunct,
+.katex .minner,
+.katex .mspace {
+  display: inline-block !important;
+  white-space: nowrap !important;
+}
+
+/* Ép chế độ display mode (khối công thức) cũng hiển thị nội dòng nằm ngang */
+.katex-display {
+  display: inline-block !important;
+  margin: 0 4px !important;
+  padding: 0 !important;
+  vertical-align: middle !important;
+  text-align: left !important;
+  max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 4px 0;
+}
+
+.katex-display > .katex {
+  display: inline-block !important;
+  text-align: left !important;
+  white-space: nowrap !important;
 }
 
 @media (max-width: 760px) {
