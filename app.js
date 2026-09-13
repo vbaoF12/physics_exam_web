@@ -32,7 +32,8 @@
     questionScrollFrame: null,
     questionJumpTimer: null,
     observerLockUntil: 0,
-    autosaveTimer: null
+    autosaveTimer: null,
+    gradeFilter: "all"
   };
 
   const $ = (selector) => document.querySelector(selector);
@@ -129,6 +130,21 @@
     $("#student-register-form")?.addEventListener("submit", handleStudentRegister);
     $("#student-logout-button")?.addEventListener("click", handleStudentLogout);
     $("#student-auth-teacher-button")?.addEventListener("click", openTeacherAccess);
+    // Nút tài khoản học sinh → mở modal hồ sơ
+    $("#student-nav-account")?.addEventListener("click", openStudentProfileModal);
+    // Modal hồ sơ học sinh
+    $("#student-profile-form")?.addEventListener("submit", handleUpdateStudentProfile);
+    $$('[data-close-student-profile]').forEach((el) =>
+      el.addEventListener("click", closeStudentProfileModal)
+    );
+    // Bộ lọc khối
+    $$('[data-grade-filter]').forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.gradeFilter = btn.dataset.gradeFilter;
+        $$('[data-grade-filter]').forEach((b) => b.classList.toggle("active", b === btn));
+        renderExamCatalog();
+      });
+    });
     $$('[data-toggle-password]').forEach((button) => {
       button.addEventListener("click", () => toggleStudentPassword(button));
     });
@@ -841,6 +857,7 @@
     const code = $("#pdf-exam-code").value.trim().toUpperCase().replace(/\s+/g, "-");
     const title = $("#pdf-exam-title").value.trim();
     const duration = Number($("#pdf-exam-duration").value) || 50;
+    const gradeLevel = $("#pdf-exam-grade")?.value || "12";
     const isPublished = $("#pdf-exam-publish").checked;
 
     if (!code || !title) {
@@ -889,10 +906,11 @@
       const examData = {
         ...state.extractedExamData,
         title,
-        durationMinutes: duration
+        durationMinutes: duration,
+        gradeLevel
       };
 
-      setProgress(15, "Đang tạo bản ghi đề thi trên Supabase...", `💾 Đang đăng ký đề thi ${code} vào hệ thống...`, "info");
+      setProgress(20, "Đang tạo bản ghi đề thi trên Supabase...", `💾 Đang đăng ký đề thi ${code} (Khối ${gradeLevel}) vào hệ thống...`, "info");
 
       // Kiểm tra đề cũ nếu đã tồn tại
       const { data: existing } = await window.supabaseClient
@@ -906,8 +924,8 @@
         title,
         description: `Đề thi tạo tự động từ file PDF bằng AI: ${file.name}`,
         duration_minutes: duration,
-        grade_level: "THPT",
-        is_published: false,
+        grade_level: gradeLevel,
+        is_published: Boolean(isPublished),
         exam_data: examData,
         created_by: state.teacherUser.id,
         updated_at: new Date().toISOString()
@@ -923,7 +941,7 @@
           .single();
         if (uErr) throw uErr;
         examId = updated.id;
-        setProgress(30, "Đã cập nhật đề thi", `🔄 Đã cập nhật đề thi [${code}].`, "info");
+        setProgress(60, "Đã cập nhật đề thi", `🔄 Đã cập nhật đề thi [${code}] trên Supabase.`, "info");
       } else {
         const { data: inserted, error: iErr } = await window.supabaseClient
           .from("exams")
@@ -932,40 +950,16 @@
           .single();
         if (iErr) throw iErr;
         examId = inserted.id;
-        setProgress(30, "Đã tạo đề thi thành công", `✅ Đã tạo đề thi [${code}] trên Supabase.`, "success");
+        setProgress(60, "Đã tạo đề thi thành công", `✅ Đã tạo đề thi [${code}] trên Supabase.`, "success");
       }
 
-      setProgress(35, "Bắt đầu AI phân tích và bóc tách hình ảnh...", `🤖 Bắt đầu bóc tách hình ảnh từ PDF...`, "info");
-
-      // Chạy pipeline cắt ảnh tự động
-      await processAllPhysicsPdfVisuals(file, code, {
-        dryRun: false,
-        renderScale: 2,
-        minConfidence: 0.65,
-        onProgress: ({ type, pageNumber, totalPages, questionKey }) => {
-          if (type === "page_start") {
-            const curP = 35 + Math.round(((pageNumber - 1) / totalPages) * 50);
-            setProgress(curP, `Đang phân tích trang ${pageNumber}/${totalPages}...`, `📄 Trang ${pageNumber}/${totalPages}: AI đang rà soát hình ảnh...`, "info");
-          } else if (type === "visual_uploaded") {
-            setProgress(null, null, `📷 Đã crop & upload ảnh cho ${questionKey}`, "success");
-          } else if (type === "saving_db") {
-            setProgress(90, "Đang lưu trữ dữ liệu ảnh hoàn tất...", `💾 Đang cập nhật hình ảnh vào database...`, "info");
-          }
-        }
-      });
-
-      // Nếu người dùng chọn Xuất bản ngay
       if (isPublished) {
-        setProgress(95, "Đang xuất bản đề thi cho học sinh...", `📢 Xuất bản đề thi...`, "info");
-        const { error: pubErr } = await window.supabaseClient
-          .from("exams")
-          .update({ is_published: true })
-          .eq("id", examId);
-        if (pubErr) console.warn("Lỗi xuất bản:", pubErr);
-        else setProgress(98, "Đã xuất bản thành công", `🎉 Đề thi đã xuất bản cho học sinh!`, "success");
+        setProgress(85, "Đã xuất bản đề thi cho học sinh...", `📢 Xuất bản đề thi cho học sinh xem được ngay!`, "info");
+      } else {
+        setProgress(85, "Đang lưu dưới dạng bản nháp...", `📝 Đề thi lưu bản nháp (chưa xuất bản).`, "info");
       }
 
-      setProgress(100, "🎉 Hoàn tất thành công!", `✅ Đã tạo đề và tải lên toàn bộ câu hỏi kèm hình ảnh!`, "success");
+      setProgress(100, "🎉 Hoàn tất thành công!", `✅ Đã chép toàn bộ câu hỏi và lưu lên Supabase!`, "success");
 
       await loadTeacherExams();
       if (isPublished) await loadPublishedExams();
@@ -973,11 +967,11 @@
       const created = state.teacherExams.find((e) => e.id === examId);
       if (created) setExamDraftFromExam(created);
 
-      showToast(`Đã tạo thành công đề ${code}!`);
+      showToast(`Đã lưu thành công đề ${code} lên Supabase!`);
 
       window.setTimeout(() => {
         closeCreateExamModal();
-      }, 1500);
+      }, 1200);
 
     } catch (err) {
       console.error("Lỗi tạo đề từ PDF:", err);
@@ -1124,13 +1118,40 @@
       return;
     }
 
-    status.textContent = `${state.examCatalog.length} đề đang mở cho học sinh.`;
-    catalog.innerHTML = state.examCatalog.map((exam) => {
+    const filtered = state.examCatalog.filter((exam) => {
+      if (!state.gradeFilter || state.gradeFilter === "all") return true;
+      const gl = String(exam.gradeLevel || "").trim();
+      return gl === state.gradeFilter || gl.includes(state.gradeFilter);
+    });
+
+    if (!filtered.length) {
+      catalog.innerHTML = "";
+      status.textContent = `Không có đề nào thuộc Khối ${state.gradeFilter}. Hãy thử chọn tab "Tất cả".`;
+      return;
+    }
+
+    // Nếu đề đang chọn không nằm trong danh sách đã lọc, chọn đề đầu tiên của danh sách
+    if (!filtered.some((e) => e.id === state.selectedExamId)) {
+      state.selectedExamId = filtered[0].id;
+      updateSelectedExamSummary();
+    }
+
+    const filterText = state.gradeFilter && state.gradeFilter !== "all" ? ` (Khối ${state.gradeFilter})` : "";
+    status.textContent = `${filtered.length} đề đang mở cho học sinh${filterText}.`;
+    catalog.innerHTML = filtered.map((exam) => {
       const counts = getExamCounts(exam.data);
       const selected = exam.id === state.selectedExamId;
+      const gradeBadge = exam.gradeLevel && exam.gradeLevel !== "THPT"
+        ? `<span class="exam-grade-badge">Khối ${escapeHtml(exam.gradeLevel)}</span>`
+        : `<span class="exam-grade-badge">THPT</span>`;
+
       return `
         <button class="exam-catalog-card ${selected ? "selected" : ""}" type="button" data-select-exam="${exam.id}">
-          <span class="catalog-card-top"><strong>${escapeHtml(exam.code)}</strong><i>${exam.durationMinutes} phút</i></span>
+          <span class="catalog-card-top">
+            <strong>${escapeHtml(exam.code)}</strong>
+            <i>${exam.durationMinutes} phút</i>
+          </span>
+          ${gradeBadge}
           <h3>${escapeHtml(exam.title)}</h3>
           <p>${escapeHtml(exam.description || "Đề luyện Vật lí THPT theo cấu trúc mới.")}</p>
           <span class="catalog-counts">
@@ -1224,7 +1245,7 @@
   async function loadStudentProfile(user) {
     const { data, error } = await window.supabaseClient
       .from("student_profiles")
-      .select("user_id, full_name, class_name, created_at")
+      .select("user_id, full_name, grade, class_name, phone, email, created_at")
       .eq("user_id", user.id)
       .maybeSingle();
     if (error) throw error;
@@ -1233,28 +1254,37 @@
       return {
         userId: data.user_id,
         fullName: data.full_name,
+        grade: data.grade || "12",
         className: data.class_name,
-        email: user.email || ""
+        phone: data.phone || "",
+        email: user.email || data.email || ""
       };
     }
 
     const fullName = String(user.user_metadata?.full_name || "").trim();
+    const grade = String(user.user_metadata?.grade || "12");
     const className = String(user.user_metadata?.class_name || "").trim().toUpperCase();
+    const phone = String(user.user_metadata?.phone || "").trim();
     if (!fullName || !className) {
       throw new Error("Tài khoản chưa có hồ sơ học sinh. Hãy tạo lại tài khoản hoặc liên hệ giáo viên.");
     }
 
     const { data: inserted, error: insertError } = await window.supabaseClient
       .from("student_profiles")
-      .upsert({ user_id: user.id, full_name: fullName, class_name: className }, { onConflict: "user_id" })
-      .select("user_id, full_name, class_name")
+      .upsert(
+        { user_id: user.id, full_name: fullName, grade, class_name: className, phone, email: user.email || "" },
+        { onConflict: "user_id" }
+      )
+      .select("user_id, full_name, grade, class_name, phone, email")
       .single();
     if (insertError) throw insertError;
     return {
       userId: inserted.user_id,
       fullName: inserted.full_name,
+      grade: inserted.grade || "12",
       className: inserted.class_name,
-      email: user.email || ""
+      phone: inserted.phone || "",
+      email: user.email || inserted.email || ""
     };
   }
 
@@ -1333,12 +1363,21 @@
       .map((part) => part[0])
       .join("")
       .toUpperCase() || "HS";
+    const gradeLabel = profile.grade ? `Khối ${profile.grade}` : "";
     $("#student-nav-avatar").textContent = initials;
     $("#student-nav-name").textContent = profile.fullName;
-    $("#student-nav-class").textContent = `Lớp ${profile.className}`;
+    $("#student-nav-class").textContent = [gradeLabel, `Lớp ${profile.className}`].filter(Boolean).join(" · ");
     $("#student-current-avatar").textContent = initials;
     $("#student-current-name").textContent = profile.fullName;
-    $("#student-current-meta").textContent = `Lớp ${profile.className} · ${profile.email}`;
+    $("#student-current-meta").textContent = [`Khối ${profile.grade || ""}`, `Lớp ${profile.className}`, profile.email].filter(Boolean).join(" · ");
+
+    // Đặt bộ lọc khối mặc định theo khối của học sinh khi lần đầu đăng nhập
+    if (state.gradeFilter === "all" && profile.grade) {
+      state.gradeFilter = profile.grade;
+      $$('[data-grade-filter]').forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.gradeFilter === profile.grade);
+      });
+    }
   }
 
   async function handleStudentLogin(event) {
@@ -1375,7 +1414,9 @@
     event.preventDefault();
     if (!window.supabaseClient) return;
     const fullName = $("#student-register-name").value.trim();
+    const grade = $("#student-register-grade")?.value || "12";
     const className = $("#student-register-class").value.trim().toUpperCase();
+    const phone = $("#student-register-phone")?.value.trim() || "";
     const email = $("#student-register-email").value.trim();
     const password = $("#student-register-password").value;
     const confirmPassword = $("#student-register-confirm-password").value;
@@ -1406,7 +1447,7 @@
         email,
         password,
         options: {
-          data: { full_name: fullName, class_name: className, role: "student" },
+          data: { full_name: fullName, grade, class_name: className, phone, role: "student" },
           emailRedirectTo: window.location.origin
         }
       });
@@ -1439,6 +1480,132 @@
     if (window.supabaseClient) await window.supabaseClient.auth.signOut();
     showStudentAuthScreen();
     showToast("Đã đăng xuất tài khoản học sinh.");
+  }
+
+  function openStudentProfileModal() {
+    if (!state.studentProfile) return;
+    const profile = state.studentProfile;
+    const initials = profile.fullName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(-2)
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase() || "HS";
+
+    const modalAvatar = $("#profile-modal-avatar");
+    const modalNameDisplay = $("#profile-modal-name-display");
+    const modalEmailDisplay = $("#profile-modal-email-display");
+    const nameInput = $("#profile-full-name");
+    const gradeSelect = $("#profile-grade");
+    const classInput = $("#profile-class-name");
+    const phoneInput = $("#profile-phone");
+    const emailInput = $("#profile-email");
+    const messageEl = $("#student-profile-message");
+
+    if (modalAvatar) modalAvatar.textContent = initials;
+    if (modalNameDisplay) modalNameDisplay.textContent = profile.fullName;
+    if (modalEmailDisplay) modalEmailDisplay.textContent = profile.email || "Chưa có email";
+    if (nameInput) nameInput.value = profile.fullName;
+    if (gradeSelect) gradeSelect.value = profile.grade || "12";
+    if (classInput) classInput.value = profile.className;
+    if (phoneInput) phoneInput.value = profile.phone || "";
+    if (emailInput) emailInput.value = profile.email || "";
+    if (messageEl) {
+      messageEl.textContent = "";
+      messageEl.className = "student-auth-message";
+    }
+
+    const modal = $("#student-profile-modal");
+    if (modal) {
+      modal.classList.add("is-open");
+      modal.setAttribute("aria-hidden", "false");
+      nameInput?.focus();
+    }
+  }
+
+  function closeStudentProfileModal() {
+    const modal = $("#student-profile-modal");
+    if (modal) {
+      modal.classList.remove("is-open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+  }
+
+  async function handleUpdateStudentProfile(event) {
+    event.preventDefault();
+    if (!window.supabaseClient || !state.studentUser) return;
+
+    const fullName = $("#profile-full-name")?.value.trim() || "";
+    const grade = $("#profile-grade")?.value || "12";
+    const className = $("#profile-class-name")?.value.trim().toUpperCase() || "";
+    const phone = $("#profile-phone")?.value.trim() || "";
+    const messageEl = $("#student-profile-message");
+    const saveBtn = $("#student-profile-save");
+
+    if (!fullName || fullName.length < 2 || !className) {
+      if (messageEl) {
+        messageEl.className = "student-auth-message error";
+        messageEl.textContent = "Vui lòng nhập đầy đủ họ và tên và lớp học.";
+      }
+      return;
+    }
+
+    setButtonLoading(saveBtn, true, "Đang lưu...", "Lưu hồ sơ");
+    if (messageEl) {
+      messageEl.className = "student-auth-message";
+      messageEl.textContent = "";
+    }
+
+    try {
+      const { data, error } = await window.supabaseClient
+        .from("student_profiles")
+        .upsert(
+          {
+            user_id: state.studentUser.id,
+            full_name: fullName,
+            grade,
+            class_name: className,
+            phone,
+            email: state.studentUser.email || state.studentProfile?.email || "",
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: "user_id" }
+        )
+        .select("user_id, full_name, grade, class_name, phone, email")
+        .single();
+
+      if (error) throw error;
+
+      state.studentProfile = {
+        userId: data.user_id,
+        fullName: data.full_name,
+        grade: data.grade || "12",
+        className: data.class_name,
+        phone: data.phone || "",
+        email: state.studentUser.email || data.email || ""
+      };
+
+      updateStudentUi(state.studentProfile);
+
+      // Tự động cập nhật bộ lọc theo khối mới của học sinh và cập nhật kho đề
+      state.gradeFilter = state.studentProfile.grade;
+      $$('[data-grade-filter]').forEach((b) =>
+        b.classList.toggle("active", b.dataset.gradeFilter === state.gradeFilter)
+      );
+      renderExamCatalog();
+
+      showToast("Cập nhật hồ sơ thành công!");
+      closeStudentProfileModal();
+    } catch (err) {
+      console.error("Lỗi cập nhật hồ sơ:", err);
+      if (messageEl) {
+        messageEl.className = "student-auth-message error";
+        messageEl.textContent = err.message || "Không thể cập nhật hồ sơ. Vui lòng thử lại.";
+      }
+    } finally {
+      setButtonLoading(saveBtn, false, "Đang lưu...", "Lưu hồ sơ");
+    }
   }
 
   function updateTeacherUi() {
@@ -3292,6 +3459,7 @@
       title: "Đề luyện Vật lí THPT mới",
       description: "",
       durationMinutes: 50,
+      gradeLevel: "12",
       isPublished: false,
       data: createEmptyExamData()
     };
@@ -3314,6 +3482,8 @@
     $("#exam-editor-heading").textContent = draft.id ? `Chỉnh sửa ${draft.code}` : "Tạo đề mới";
     $("#exam-code-input").value = draft.code || "";
     $("#exam-duration-input").value = draft.durationMinutes || 50;
+    const gradeSelect = $("#exam-grade-input");
+    if (gradeSelect) gradeSelect.value = draft.gradeLevel || "12";
     $("#exam-title-input").value = draft.title || "";
     $("#exam-description-input").value = draft.description || "";
     $("#publish-exam-button").textContent = draft.isPublished ? "Gỡ xuất bản" : "Xuất bản";
@@ -3331,11 +3501,12 @@
     const title = $("#exam-title-input").value.trim();
     const description = $("#exam-description-input").value.trim();
     const durationMinutes = Number($("#exam-duration-input").value);
+    const gradeLevel = $("#exam-grade-input")?.value || "12";
     if (!code || !title || !Number.isFinite(durationMinutes) || durationMinutes < 10 || durationMinutes > 180) {
       showToast("Vui lòng nhập mã đề, tên đề và thời gian từ 10 đến 180 phút.");
       return false;
     }
-    Object.assign(state.examDraft, { code, title, description, durationMinutes });
+    Object.assign(state.examDraft, { code, title, description, durationMinutes, gradeLevel });
     return true;
   }
 
@@ -3581,7 +3752,7 @@
       title: state.examDraft.title,
       description: state.examDraft.description,
       duration_minutes: state.examDraft.durationMinutes,
-      grade_level: "THPT",
+      grade_level: state.examDraft.gradeLevel || "12",
       is_published: Boolean(publish),
       exam_data: state.examDraft.data,
       updated_at: new Date().toISOString()

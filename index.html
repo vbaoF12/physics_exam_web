@@ -25,13 +25,14 @@
 
     <nav class="nav" aria-label="Điều hướng chính">
       <button id="student-home-button" class="nav-link" data-screen="home" type="button" hidden>Kho đề</button>
-      <span id="student-nav-account" class="student-nav-account" hidden>
+      <button id="student-nav-account" class="student-nav-account" type="button" hidden aria-label="Xem hồ sơ"
+        title="Xem hồ sơ">
         <span id="student-nav-avatar" class="student-nav-avatar">HS</span>
         <span>
           <strong id="student-nav-name">Học sinh</strong>
           <small id="student-nav-class">Lớp --</small>
         </span>
-      </span>
+      </button>
       <button id="student-logout-button" class="nav-link student-logout-nav" type="button" hidden>Đăng xuất</button>
       <button id="teacher-dashboard-button" class="nav-link" type="button">Giáo viên</button>
     </nav>
@@ -113,8 +114,23 @@
               </label>
 
               <label class="student-auth-field">
+                <span>Khối</span>
+                <select id="student-register-grade" required>
+                  <option value="12">Khối 12</option>
+                  <option value="11">Khối 11</option>
+                  <option value="10">Khối 10</option>
+                </select>
+              </label>
+
+              <label class="student-auth-field">
                 <span>Lớp</span>
                 <input id="student-register-class" type="text" placeholder="Ví dụ: 12A1" maxlength="20" required />
+              </label>
+
+              <label class="student-auth-field">
+                <span>Số điện thoại</span>
+                <input id="student-register-phone" type="tel" inputmode="tel" autocomplete="tel"
+                  placeholder="0912 345 678" maxlength="15" />
               </label>
 
               <label class="student-auth-field">
@@ -210,6 +226,12 @@
           <h2 id="exam-library-title">Chọn đề phù hợp để bắt đầu</h2>
           <p>Bạn đã đăng nhập. Hãy chọn một đề phù hợp rồi bắt đầu làm bài; kết quả sẽ được lưu đúng tài khoản của bạn.
           </p>
+        </div>
+        <div class="grade-filter-bar" role="group" aria-label="Lọc đề theo khối">
+          <button class="grade-filter-btn active" type="button" data-grade-filter="all">Tất cả</button>
+          <button class="grade-filter-btn" type="button" data-grade-filter="10">Khối 10</button>
+          <button class="grade-filter-btn" type="button" data-grade-filter="11">Khối 11</button>
+          <button class="grade-filter-btn" type="button" data-grade-filter="12">Khối 12</button>
         </div>
         <div id="exam-catalog-status" class="catalog-status">Đang tải danh sách đề...</div>
         <div id="exam-catalog" class="exam-catalog-grid"></div>
@@ -505,6 +527,13 @@
                 <label>Mã đề<input id="exam-code-input" maxlength="40" placeholder="Ví dụ: VL-THPT-02" /></label>
                 <label>Thời gian (phút)<input id="exam-duration-input" type="number" min="10" max="180"
                     value="50" /></label>
+                <label>Khối
+                  <select id="exam-grade-input">
+                    <option value="12">Khối 12</option>
+                    <option value="11">Khối 11</option>
+                    <option value="10">Khối 10</option>
+                  </select>
+                </label>
                 <label class="metadata-wide">Tên đề<input id="exam-title-input" maxlength="150"
                     placeholder="Tên đề luyện" /></label>
                 <label class="metadata-wide">Mô tả<textarea id="exam-description-input" rows="4" data-auto-grow
@@ -567,6 +596,79 @@
       </div>
     </section>
   </main>
+
+  <!-- Modal Hồ sơ học sinh -->
+  <div id="student-profile-modal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-student-profile></div>
+
+    <div class="modal-card student-profile-card" role="dialog" aria-modal="true" aria-labelledby="student-profile-title"
+      aria-describedby="student-profile-desc">
+      <div class="student-profile-header">
+        <div>
+          <span class="eyebrow dark">TÀI KHOẢN HỌC SINH</span>
+          <h2 id="student-profile-title">Hồ sơ cá nhân</h2>
+          <p id="student-profile-desc">Cập nhật thông tin cá nhân của bạn.</p>
+        </div>
+        <button id="close-student-profile" class="modal-close-icon" type="button" aria-label="Đóng"
+          data-close-student-profile>
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="student-profile-avatar-row">
+        <span id="profile-modal-avatar" class="profile-modal-avatar">HS</span>
+        <div>
+          <strong id="profile-modal-name-display">Học sinh</strong>
+          <small id="profile-modal-email-display">email@gmail.com</small>
+        </div>
+      </div>
+
+      <form id="student-profile-form" class="student-profile-form">
+        <div class="student-profile-grid">
+          <label class="student-profile-field profile-field-wide">
+            <span>Họ và tên</span>
+            <input id="profile-full-name" type="text" autocomplete="name" maxlength="80" required
+              placeholder="Ví dụ: Nguyễn Minh Anh" />
+          </label>
+
+          <label class="student-profile-field">
+            <span>Khối</span>
+            <select id="profile-grade" required>
+              <option value="12">Khối 12</option>
+              <option value="11">Khối 11</option>
+              <option value="10">Khối 10</option>
+            </select>
+          </label>
+
+          <label class="student-profile-field">
+            <span>Lớp</span>
+            <input id="profile-class-name" type="text" maxlength="20" required placeholder="Ví dụ: 12A1" />
+          </label>
+
+          <label class="student-profile-field profile-field-wide">
+            <span>Số điện thoại</span>
+            <input id="profile-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="15"
+              placeholder="0912 345 678" />
+          </label>
+
+          <label class="student-profile-field profile-field-wide">
+            <span>Email đăng ký</span>
+            <input id="profile-email" type="email" disabled class="profile-email-readonly" />
+            <small class="field-hint">Email tài khoản không thể thay đổi tại đây.</small>
+          </label>
+        </div>
+
+        <p id="student-profile-message" class="student-auth-message" role="status" aria-live="polite"></p>
+
+        <div class="student-profile-actions">
+          <button type="button" class="secondary-button" data-close-student-profile>Đóng</button>
+          <button id="student-profile-save" type="submit" class="primary-button compact">Lưu hồ sơ</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <div id="teacher-login-modal" class="modal" aria-hidden="true">
     <div class="modal-backdrop" data-close-teacher-login></div>
@@ -672,7 +774,7 @@
               stroke-width="2" />
             <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" fill="none" stroke="currentColor" stroke-width="2" />
           </svg>
-          Tải file PDF (AI bóc tách & Cắt ảnh)
+          Tải file PDF (Tự động chép đề lên Supabase)
         </button>
         <button id="tab-btn-manual" class="create-tab-btn" type="button" role="tab" aria-selected="false">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -732,12 +834,25 @@
               </label>
             </div>
 
-            <label class="teacher-field" for="pdf-exam-title">
-              <span>Tên đề thi</span>
-              <span class="teacher-input-wrap">
-                <input id="pdf-exam-title" type="text" placeholder="VD: Đề luyện Vật lí THPT số 01" required />
-              </span>
-            </label>
+            <div class="fields-row-2">
+              <label class="teacher-field" for="pdf-exam-title">
+                <span>Tên đề thi</span>
+                <span class="teacher-input-wrap">
+                  <input id="pdf-exam-title" type="text" placeholder="VD: Đề luyện Vật lí THPT số 01" required />
+                </span>
+              </label>
+
+              <label class="teacher-field" for="pdf-exam-grade">
+                <span>Khối</span>
+                <span class="teacher-input-wrap">
+                  <select id="pdf-exam-grade">
+                    <option value="12">Khối 12</option>
+                    <option value="11">Khối 11</option>
+                    <option value="10">Khối 10</option>
+                  </select>
+                </span>
+              </label>
+            </div>
 
             <label class="checkbox-label" for="pdf-exam-publish">
               <input id="pdf-exam-publish" type="checkbox" />

@@ -4870,13 +4870,293 @@ textarea:focus {
   font-style: italic;
 }
 
-@media (max-width: 600px) {
-  .preview-options {
+.preview-options {
+  grid-template-columns: 1fr;
+}
+
+.preview-panel-header {
+  flex-direction: column;
+  align-items: flex-start;
+}
+}
+
+/* ============================================================
+   THANH LỌC THEO KHỐI
+   ============================================================ */
+
+.grade-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.grade-filter-btn {
+  padding: 8px 20px;
+  border-radius: 999px;
+  border: 1.5px solid var(--slate-200, #e2e8f0);
+  background: white;
+  color: var(--slate-600, #475569);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  line-height: 1;
+}
+
+.grade-filter-btn:hover {
+  border-color: var(--blue-500, #3b82f6);
+  color: var(--blue-600, #2563eb);
+  background: var(--blue-50, #eff6ff);
+}
+
+.grade-filter-btn.active {
+  background: var(--navy-800, #1e293b);
+  border-color: var(--navy-800, #1e293b);
+  color: white;
+  box-shadow: 0 2px 8px rgba(30, 41, 59, 0.25);
+}
+
+/* Badge khối trên thẻ đề */
+.exam-grade-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  background: var(--blue-100, #dbeafe);
+  color: var(--blue-700, #1d4ed8);
+  margin-bottom: 4px;
+}
+
+/* ============================================================
+   MODAL HỒ SƠ HỌC SINH
+   ============================================================ */
+
+.student-profile-card {
+  max-width: 480px;
+  width: 100%;
+  padding: 32px;
+  border-radius: 20px;
+}
+
+.student-profile-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.student-profile-header h2 {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--navy-900, #0f172a);
+  margin: 4px 0 2px;
+}
+
+.student-profile-header p {
+  font-size: 13px;
+  color: var(--slate-500, #64748b);
+  margin: 0;
+}
+
+.student-profile-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--slate-50, #f8fafc);
+  border: 1px solid var(--slate-200, #e2e8f0);
+  margin-bottom: 24px;
+}
+
+.profile-modal-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: white;
+  font-size: 18px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.student-profile-avatar-row strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--navy-900, #0f172a);
+}
+
+.student-profile-avatar-row small {
+  font-size: 12px;
+  color: var(--slate-500, #64748b);
+}
+
+.student-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.student-profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.student-profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--slate-700, #334155);
+}
+
+.profile-field-wide {
+  grid-column: 1 / -1;
+}
+
+.student-profile-field input,
+.student-profile-field select {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--slate-200, #e2e8f0);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--navy-900, #0f172a);
+  background: white;
+  transition: border-color 0.15s;
+  outline: none;
+}
+
+.student-profile-field input:focus,
+.student-profile-field select:focus {
+  border-color: var(--navy-800, #1e293b);
+  box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
+}
+
+.profile-email-readonly {
+  background: var(--slate-50, #f8fafc) !important;
+  color: var(--slate-400, #94a3b8) !important;
+  cursor: not-allowed;
+}
+
+.student-profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+@media (max-width: 520px) {
+  .student-profile-card {
+    padding: 20px 16px;
+  }
+
+  .student-profile-grid {
     grid-template-columns: 1fr;
   }
 
-  .preview-panel-header {
-    flex-direction: column;
-    align-items: flex-start;
+  .profile-field-wide {
+    grid-column: 1;
   }
+}
+
+/* ============================================================
+   NAV ACCOUNT BUTTON (HOC SINH)
+   ============================================================ */
+
+button#student-nav-account.student-nav-account {
+  cursor: pointer;
+  border: none;
+  padding: 5px 10px 5px 5px;
+  border-radius: 999px;
+  transition: background 0.16s, box-shadow 0.16s;
+}
+
+button#student-nav-account.student-nav-account:hover {
+  background: var(--slate-100, #f1f5f9);
+  box-shadow: 0 0 0 2px var(--slate-200, #e2e8f0);
+}
+
+/* Form đăng ký - select style */
+.student-auth-field select {
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--slate-200, #e2e8f0);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--navy-900, #0f172a);
+  background: white;
+  width: 100%;
+  transition: border-color 0.15s;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23475569' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.student-auth-field select:focus {
+  border-color: var(--navy-800, #1e293b);
+  box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
+}
+
+/* Teacher form select style */
+.teacher-input-wrap select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--slate-200, #e2e8f0);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--navy-900, #0f172a);
+  background: white;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23475569' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+  transition: border-color 0.15s;
+}
+
+.teacher-input-wrap select:focus {
+  border-color: var(--navy-800, #1e293b);
+  box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
+}
+
+/* Exam metadata grid select style */
+.exam-metadata-grid label select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 7px;
+  border: 1.5px solid var(--slate-200, #e2e8f0);
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--navy-900, #0f172a);
+  background: white;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23475569' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+  transition: border-color 0.15s;
+}
+
+.exam-metadata-grid label select:focus {
+  border-color: var(--navy-800, #1e293b);
+  box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
 }
