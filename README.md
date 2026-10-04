@@ -1,120 +1,146 @@
-# Nâng cấp đăng nhập học sinh trước khi chọn đề
+<div align="center">
 
-Bản này được xây trên phiên bản `exam_library_upgrade` và thêm luồng:
+# ⚛️ Physics Exam Web
 
-1. Học sinh mở website.
-2. Đăng nhập hoặc tạo tài khoản.
-3. Hệ thống tải hồ sơ gồm họ tên và lớp.
-4. Học sinh mới được vào kho đề.
-5. Khi nộp bài, kết quả được gắn với đúng tài khoản học sinh.
-6. Giáo viên vẫn đăng nhập bằng khu vực riêng và xem toàn bộ bảng điểm.
+**Nền tảng luyện đề Vật lí THPT trực tuyến — làm bài có tính giờ, chấm điểm tự động, quản lý kết quả theo tài khoản, và trích xuất đề thi bằng AI.**
 
-## File cần dùng
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
+![Deno](https://img.shields.io/badge/Deno-000000?logo=deno&logoColor=white)
 
-- `index.html`: giao diện đăng nhập/đăng ký học sinh và kho đề sau đăng nhập.
-- `styles.css`: giao diện responsive cho máy tính và điện thoại.
-- `app.js`: Supabase Auth, phân biệt học sinh/giáo viên, chọn đề và lưu điểm.
-- `student_auth_upgrade.sql`: migration cần chạy thêm trên Supabase.
-- `supabase_exam_library.sql`: file cũ để tham khảo; không cần chạy lại nếu đã chạy trước đó.
+</div>
 
-Giữ nguyên các file hiện tại của bạn:
+---
 
-- `data.js`
-- `supabase-config.js`
+## 📖 Giới thiệu
 
-## Bước 1: Chạy SQL
+**Physics Exam Web** là ứng dụng web giúp học sinh luyện đề Vật lí theo cấu trúc đề thi THPT mới (trắc nghiệm nhiều lựa chọn, đúng/sai, trả lời ngắn). Giáo viên có thể xây dựng kho đề, xuất bản đề và theo dõi bảng điểm của toàn bộ học sinh. Hệ thống tích hợp **AI** để tự động trích xuất câu hỏi từ nội dung đề thi, giúp giảm đáng kể thời gian soạn đề thủ công.
 
-Vào Supabase:
+## ✨ Tính năng chính
 
-`SQL Editor → New query`
+### 👨‍🎓 Dành cho học sinh
+- Đăng ký / đăng nhập bằng email, lưu hồ sơ **họ tên và lớp**.
+- Duyệt **kho đề** đã được giáo viên xuất bản.
+- Làm bài **có đồng hồ đếm ngược** theo thời lượng từng đề.
+- Hỗ trợ **3 dạng câu hỏi**: trắc nghiệm (MCQ), đúng/sai, trả lời ngắn.
+- **Chấm điểm tự động** và lưu lịch sử kết quả cá nhân.
+- Giao diện **responsive** cho cả máy tính và điện thoại.
 
-Mở file `student_auth_upgrade.sql`, dán toàn bộ nội dung và nhấn `Run`.
+### 👩‍🏫 Dành cho giáo viên
+- Khu vực đăng nhập riêng, phân quyền ở tầng cơ sở dữ liệu.
+- Tạo, chỉnh sửa, xuất bản / ẩn đề thi trong kho đề.
+- Xem **toàn bộ bảng điểm** của học sinh.
+- **Trích xuất câu hỏi bằng AI** từ nội dung đề và **phân tích trang đề** để chuẩn hoá dữ liệu.
 
-SQL sẽ:
+### 🔒 Bảo mật & toàn vẹn dữ liệu
+- **Supabase Auth** quản lý xác thực.
+- **Row Level Security (RLS)**: học sinh chỉ đọc lịch sử của mình, giáo viên đọc toàn bộ.
+- Mỗi kết quả được gắn với `student_user_id` của đúng tài khoản nộp bài.
+- Ràng buộc `CHECK` ở CSDL đảm bảo đề xuất bản đúng cấu trúc.
 
-- Tạo bảng `student_profiles`.
-- Tạo hồ sơ tự động khi học sinh đăng ký.
-- Chỉ cho người đã đăng nhập xem kho đề.
-- Gắn `student_user_id` vào từng kết quả.
-- Cho học sinh nộp điểm bằng tài khoản của chính mình.
-- Cho học sinh chỉ đọc lịch sử của mình; giáo viên đọc toàn bộ.
+## 🏗️ Kiến trúc
 
-## Bước 2: Cấu hình Supabase Auth
-
-Vào:
-
-`Authentication → Providers → Email`
-
-Đảm bảo email/password đang được bật và cho phép người dùng mới đăng ký.
-
-Vào:
-
-`Authentication → URL Configuration`
-
-Điền:
-
-- Site URL: địa chỉ website Vercel chính thức.
-- Redirect URLs: thêm địa chỉ website Vercel, ví dụ `https://ten-web.vercel.app/**`.
-
-### Chế độ xác nhận email
-
-- Muốn học sinh tạo xong và vào web ngay: tắt `Confirm email` trong giai đoạn thử nghiệm.
-- Muốn an toàn hơn: bật `Confirm email`; học sinh phải mở email xác nhận rồi mới đăng nhập.
-
-## Bước 3: Thay file trong dự án
-
-Thay ba file:
-
-- `index.html`
-- `styles.css`
-- `app.js`
-
-Giữ nguyên:
-
-- `data.js`
-- `supabase-config.js`
-
-Cấu trúc cuối:
-
-```text
-website/
-├── index.html
-├── styles.css
-├── app.js
-├── data.js
-└── supabase-config.js
+```mermaid
+flowchart LR
+    A[Trình duyệt<br/>HTML / CSS / JS] -->|Auth, CRUD| B[(Supabase<br/>PostgreSQL + RLS)]
+    A -->|Gọi hàm| C[Supabase Edge Functions<br/>Deno / TypeScript]
+    C -->|Prompt + nội dung đề| D[LLM qua OpenRouter]
+    D -->|JSON câu hỏi| C
+    C --> A
 ```
 
-## Bước 4: Tải lên GitHub
+## 🧰 Công nghệ sử dụng
 
-Tải ba file đã thay lên repository GitHub và commit:
+| Lớp | Công nghệ |
+|---|---|
+| Frontend | HTML5, CSS3, JavaScript (Vanilla) |
+| Backend / BaaS | Supabase (Auth, PostgreSQL, Row Level Security) |
+| Serverless | Supabase Edge Functions (Deno, TypeScript) |
+| AI | LLM thông qua OpenRouter API |
+| CSDL | PostgreSQL / PL-pgSQL (hàm, trigger, policy) |
 
-`Thêm đăng nhập học sinh trước kho đề`
+## 📁 Cấu trúc thư mục
 
-Chờ Vercel deploy thành `Ready`, sau đó mở website và nhấn `Ctrl + F5`.
+```text
+physics_exam_web/
+├── index.html                  # Giao diện chính (đăng nhập, kho đề, làm bài)
+├── styles.css                  # Giao diện responsive
+├── app.js                      # Logic chính: Auth, phân quyền, làm bài, chấm điểm
+├── data.js                     # Dữ liệu đề mẫu
+├── supabase-config.js          # Cấu hình kết nối Supabase
+├── supabase_exam_library.sql   # Schema kho đề + quyền giáo viên
+├── student_auth_upgrade.sql    # Migration: hồ sơ học sinh + RLS
+└── Edge Funtion/
+    ├── analyze-physics-page/   # Edge Function phân tích trang đề
+    └── extract-exam-questions/ # Edge Function trích xuất câu hỏi bằng AI
+```
 
-## Bước 5: Kiểm tra
+## 🚀 Cài đặt & chạy
 
-### Học sinh
+### 1. Clone dự án
+```bash
+git clone https://github.com/vbaoF12/physics_exam_web.git
+cd physics_exam_web
+```
 
-1. Mở website bằng cửa sổ ẩn danh.
-2. Chọn `Tạo tài khoản`.
-3. Nhập họ tên, lớp, email và mật khẩu.
-4. Đăng nhập.
-5. Kiểm tra chỉ sau đăng nhập mới nhìn thấy kho đề.
-6. Chọn đề, làm bài và nộp.
-7. Vào Supabase → Table Editor → `exam_attempts`.
-8. Kiểm tra cột `student_user_id` đã có giá trị.
+### 2. Thiết lập Supabase
+1. Tạo project tại [supabase.com](https://supabase.com).
+2. Vào **SQL Editor** và chạy lần lượt:
+   - `supabase_exam_library.sql` — tạo bảng `exams` và hàm phân quyền giáo viên.
+   - `student_auth_upgrade.sql` — tạo `student_profiles`, trigger và các RLS policy.
+3. Vào **Authentication → Providers → Email**: bật email/password và cho phép đăng ký mới.
+4. Thêm email giáo viên vào hàm `is_exam_teacher()` trong file SQL.
 
-### Giáo viên
+### 3. Cấu hình kết nối
+Cập nhật `supabase-config.js` bằng **Project URL** và **anon key** của bạn:
+```js
+window.SUPABASE_URL = "https://<project-id>.supabase.co";
+window.SUPABASE_ANON_KEY = "<your-anon-key>";
+```
+> Tên biến thực tế có thể khác — hãy giữ đúng theo file hiện có.
 
-1. Ở màn hình đầu, nhấn `Tôi là giáo viên`.
-2. Đăng nhập tài khoản giáo viên.
-3. Kiểm tra bảng điểm và quản lý đề vẫn hoạt động.
-4. Tài khoản học sinh đăng nhập vào form giáo viên phải bị từ chối quyền.
+### 4. Triển khai Edge Functions (tuỳ chọn, cho tính năng AI)
+```bash
+supabase functions deploy extract-exam-questions
+supabase functions deploy analyze-physics-page
+supabase secrets set OPENROUTER_API_KEY=<your-key>
+```
 
-## Lưu ý
+### 5. Chạy ứng dụng
+Đây là web tĩnh, chỉ cần mở bằng một static server:
+```bash
+npx serve .
+```
+Hoặc dùng extension **Live Server** trong VS Code.
 
-- Supabase chỉ duy trì một phiên đăng nhập trên cùng một trình duyệt. Khi chuyển từ học sinh sang giáo viên, website sẽ đăng xuất tài khoản học sinh trước.
-- Các kết quả cũ chưa có `student_user_id` vẫn được giáo viên nhìn thấy, nhưng học sinh sẽ không thấy các kết quả cũ đó trong lịch sử cá nhân.
-- Đáp án đề vẫn được tải về trình duyệt để chấm bài. Bản này phù hợp cho luyện tập; bài kiểm tra chính thức nên chấm ở phía máy chủ.
+## 🔄 Luồng sử dụng
+
+1. Học sinh mở website → đăng nhập hoặc tạo tài khoản.
+2. Hệ thống tải hồ sơ (họ tên, lớp) → mở kho đề.
+3. Chọn đề → làm bài trong thời gian quy định.
+4. Nộp bài → nhận điểm ngay, kết quả lưu theo tài khoản.
+5. Giáo viên xem bảng điểm và quản lý kho đề trong khu vực riêng.
+
+## 🗺️ Hướng phát triển
+
+- [ ] Thống kê tiến bộ và biểu đồ điểm theo thời gian.
+- [ ] Xếp hạng, huy hiệu để tăng động lực học tập.
+- [ ] Giải thích đáp án chi tiết bằng AI.
+- [ ] Hỗ trợ công thức LaTeX và hình vẽ trong câu hỏi.
+- [ ] Xuất bảng điểm ra Excel / PDF.
+
+## 🤝 Đóng góp
+
+Mọi đóng góp đều được hoan nghênh. Hãy fork repo, tạo nhánh mới (`feature/ten-tinh-nang`), commit và mở Pull Request.
+
+## 📬 Liên hệ
+
+**vbaoF12** — [GitHub](https://github.com/vbaoF12)
+
+---
+
+<div align="center">⭐ Nếu thấy dự án hữu ích, hãy tặng một ngôi sao cho repo nhé!</div>
